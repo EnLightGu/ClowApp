@@ -1,4 +1,4 @@
-# 这是一个基础的桌面应用
+# 这是一个基础的桌面应用，用于我自己学习python开发
 # AI总结:
 # Qt Dock Widgets Application - 项目结构文档
 
