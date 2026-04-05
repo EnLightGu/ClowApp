@@ -1,5 +1,5 @@
 # 这是一个基础的桌面应用
-# AI:
+# AI总结:
 # Qt Dock Widgets Application - 项目结构文档
 
 ## 项目概述
