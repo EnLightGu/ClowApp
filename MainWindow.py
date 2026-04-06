@@ -5,7 +5,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 from PyQt5 import uic
 # from Widgets.WindowManager import WindowManager
-from ctypes import windll, wintypes
+
 import os
 
 
@@ -24,6 +24,7 @@ class MainWindow(QMainWindow):
             self.setGeometry(100, 100, 1200, 800)
         else:
             # 移除默认窗口标题栏 适配windows
+            from ctypes import windll, wintypes
             self.setWindowFlags(Qt.Window)
             self.setGeometry(100, 100, 1200, 800)
             self.hide_title_bar()
@@ -41,6 +42,7 @@ class MainWindow(QMainWindow):
 
 
     def hide_title_bar(self):
+        from ctypes import windll, wintypes
         hwnd = int(self.winId())
         user32 = windll.user32
 
