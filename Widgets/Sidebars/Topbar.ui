@@ -13,7 +13,7 @@
   <property name="minimumSize">
    <size>
     <width>0</width>
-    <height>60</height>
+    <height>40</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -43,11 +43,11 @@
    </property>
    <item>
     <widget class="QLabel" name="title_label">
-     <property name="text">
-      <string>Main Window</string>
-     </property>
      <property name="styleSheet">
       <string notr="true">color: black; font-size: 14px; font-weight: bold;</string>
+     </property>
+     <property name="text">
+      <string>一个应用</string>
      </property>
     </widget>
    </item>
@@ -66,13 +66,10 @@
    </item>
    <item>
     <widget class="QPushButton" name="minimize_button">
-     <property name="text">
-      <string>−</string>
-     </property>
      <property name="minimumSize">
       <size>
-       <width>60</width>
-       <height>60</height>
+       <width>40</width>
+       <height>40</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -97,17 +94,17 @@ QPushButton:pressed {
     background-color: #505050;
 }</string>
      </property>
+     <property name="text">
+      <string>−</string>
+     </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="maximize_button">
-     <property name="text">
-      <string>□</string>
-     </property>
      <property name="minimumSize">
       <size>
-       <width>60</width>
-       <height>60</height>
+       <width>40</width>
+       <height>40</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -132,17 +129,17 @@ QPushButton:pressed {
     background-color: #505050;
 }</string>
      </property>
+     <property name="text">
+      <string>□</string>
+     </property>
     </widget>
    </item>
    <item>
     <widget class="QPushButton" name="close_button">
-     <property name="text">
-      <string>×</string>
-     </property>
      <property name="minimumSize">
       <size>
-       <width>60</width>
-       <height>60</height>
+       <width>40</width>
+       <height>40</height>
       </size>
      </property>
      <property name="maximumSize">
@@ -166,6 +163,9 @@ QPushButton:hover {
 QPushButton:pressed {
     background-color: #f1707a;
 }</string>
+     </property>
+     <property name="text">
+      <string>×</string>
      </property>
     </widget>
    </item>

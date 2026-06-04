@@ -79,7 +79,7 @@ class MainWindow(QMainWindow):
             self.topbar_widget.layout().addWidget(self.topbar)
 
             # 设置标题
-            self.topbar.set_title(self.windowTitle())
+            self.topbar.set_title('主窗口')
 
             # 连接标题栏信号
             self.topbar.minimize_clicked.connect(self._on_minimize_clicked)

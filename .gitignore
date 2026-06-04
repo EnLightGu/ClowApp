@@ -1,0 +1,22 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyc
+*.pyo
+*.so
+
+# Build
+build/
+dist/
+*.spec
+
+# IDE
+.idea/
+*.iml
+
+# Output
+THEEXE/
+
+# Example / backup
+examples/
+*副本*

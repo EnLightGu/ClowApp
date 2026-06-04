@@ -13,22 +13,38 @@
   <property name="windowTitle">
    <string>Center Widget</string>
   </property>
-  <layout class="QVBoxLayout" name="verticalLayout">
-   <item>
-    <widget class="QLabel" name="center_label">
-     <property name="text">
-      <string>Center</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-     <property name="styleSheet">
-      <string notr="true">font-size: 24px;
-font-weight: bold;</string>
-     </property>
-    </widget>
-   </item>
-  </layout>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+<!--     <widget class="QLabel" name="center_label">-->
+<!--      <property name="sizePolicy">-->
+<!--       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">-->
+<!--        <horstretch>0</horstretch>-->
+<!--        <verstretch>0</verstretch>-->
+<!--       </sizepolicy>-->
+<!--      </property>-->
+<!--      <property name="styleSheet">-->
+<!--       <string notr="true">font-color:#ffffff;font-size: 48px;font-weight: bold;</string>-->
+<!--      </property>-->
+<!--      <property name="frameShape">-->
+<!--       <enum>QFrame::NoFrame</enum>-->
+<!--      </property>-->
+<!--      <property name="frameShadow">-->
+<!--       <enum>QFrame::Plain</enum>-->
+<!--      </property>-->
+<!--      <property name="text">-->
+<!--       <string>This is Center text</string>-->
+<!--      </property>-->
+<!--      <property name="alignment">-->
+<!--       <set>Qt::AlignCenter</set>-->
+<!--      </property>-->
+<!--      <property name="wordWrap">-->
+<!--       <bool>true</bool>-->
+<!--      </property>-->
+<!--     </widget>-->
+    </item>
+   </layout>
+  </widget>
  </widget>
  <resources/>
  <connections/>

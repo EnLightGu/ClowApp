@@ -55,7 +55,7 @@ class CenterWidgetManage(QMainWindow):
 
         # 创建左侧dock内容
         left_widget = QWidget()
-        left_widget.setStyleSheet("background-color: #3A3A3A; color: white;")
+        left_widget.setStyleSheet("background-color: #55AAFF;")
         left_layout = QVBoxLayout()
         left_label = QLabel("Left Dock Area")
         left_label.setAlignment(Qt.AlignCenter)
