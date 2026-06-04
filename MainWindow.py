@@ -2,11 +2,15 @@ import platform
 import sys
 
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QRect, QPoint
+from PyQt5.QtGui import QCursor
 from PyQt5 import uic
-# from Widgets.WindowManager import WindowManager
 
 import os
+
+
+# 窗口边缘拖拽调整大小的阈值（像素）
+RESIZE_MARGIN = 8
 
 
 
@@ -33,12 +37,14 @@ class MainWindow(QMainWindow):
         # 设置窗口属性
         self.setWindowTitle("Main Window")
 
-        # 初始化标题栏
+        # ① 初始化标题栏（无依赖）
         self._init_topbar()
-        # 初始化侧边栏
-        self._init_sidebars()
-        # 初始化中心组件
+        # ② 初始化中央预览器
         self._init_center_widget()
+        # ③ 初始化侧边栏（创建 LeftSidebar/RightSidebar widget）
+        self._init_sidebars()
+        # ④ 初始化 QDockWidget（边栏QDock + 文件管理 + 底部路径 + 右侧预览）
+        self._init_docks()
 
 
     def hide_title_bar(self):
@@ -70,6 +76,94 @@ class MainWindow(QMainWindow):
         # 刷新窗口非客户区（让隐藏立即生效）
         user32.SetWindowPos(hwnd, 0, 0, 0, 0, 0, 0x0001 | 0x0002 | 0x0040)
 
+    # ── 窗口边缘调整大小 ──
+    _resizing = False
+    _resize_dir = 0  # 0=None 1=L 2=R 3=T 4=B 5=TL 6=TR 7=BL 8=BR
+
+    def _get_resize_cursor(self, pos):
+        """根据鼠标位置返回调整大小的光标和方向"""
+        rect = self.rect()
+        x, y = pos.x(), pos.y()
+        w, h = rect.width(), rect.height()
+
+        on_left = x < RESIZE_MARGIN
+        on_right = x > w - RESIZE_MARGIN
+        on_top = y < RESIZE_MARGIN
+        on_bottom = y > h - RESIZE_MARGIN
+
+        if on_top and on_left:
+            return QCursor(Qt.SizeFDiagCursor), 5
+        if on_top and on_right:
+            return QCursor(Qt.SizeBDiagCursor), 6
+        if on_bottom and on_left:
+            return QCursor(Qt.SizeBDiagCursor), 7
+        if on_bottom and on_right:
+            return QCursor(Qt.SizeFDiagCursor), 8
+        if on_left:
+            return QCursor(Qt.SizeHorCursor), 1
+        if on_right:
+            return QCursor(Qt.SizeHorCursor), 2
+        if on_top:
+            return QCursor(Qt.SizeVerCursor), 3
+        if on_bottom:
+            return QCursor(Qt.SizeVerCursor), 4
+        return QCursor(Qt.ArrowCursor), 0
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            cursor, direction = self._get_resize_cursor(event.pos())
+            if direction:
+                self._resizing = True
+                self._resize_dir = direction
+                self._resize_start_pos = event.globalPos()
+                self._resize_start_geom = self.geometry()
+                event.accept()
+                return
+        super().mousePressEvent(event)
+
+    def mouseMoveEvent(self, event):
+        if self._resizing and self._resize_dir:
+            delta = event.globalPos() - self._resize_start_pos
+            dx, dy = delta.x(), delta.y()
+            geom = QRect(self._resize_start_geom)
+
+            if self._resize_dir == 1:  # Left
+                geom.setLeft(geom.left() + dx)
+            elif self._resize_dir == 2:  # Right
+                geom.setRight(geom.right() + dx)
+            elif self._resize_dir == 3:  # Top
+                geom.setTop(geom.top() + dy)
+            elif self._resize_dir == 4:  # Bottom
+                geom.setBottom(geom.bottom() + dy)
+            elif self._resize_dir == 5:  # Top-Left
+                geom.setTopLeft(geom.topLeft() + delta)
+            elif self._resize_dir == 6:  # Top-Right
+                geom.setTopRight(geom.topRight() + delta)
+            elif self._resize_dir == 7:  # Bottom-Left
+                geom.setBottomLeft(geom.bottomLeft() + delta)
+            elif self._resize_dir == 8:  # Bottom-Right
+                geom.setBottomRight(geom.bottomRight() + delta)
+
+            if geom.width() >= self.minimumWidth() and geom.height() >= self.minimumHeight():
+                self.setGeometry(geom)
+            event.accept()
+            return
+
+        # 鼠标悬停时改变光标
+        if not self._resizing:
+            cursor, _ = self._get_resize_cursor(event.pos())
+            self.setCursor(cursor)
+        super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._resizing:
+            self._resizing = False
+            self._resize_dir = 0
+            self.setCursor(Qt.ArrowCursor)
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
+
     def _init_topbar(self):
         """初始化自定义标题栏"""
         try:
@@ -93,23 +187,16 @@ class MainWindow(QMainWindow):
             print("Please make sure Widgets/Sidebars/Topbar.py exists")
 
     def _init_sidebars(self):
-        """初始化侧边栏"""
+        """初始化侧边栏 QDockWidget，注入主窗口引用"""
         try:
-            # 导入侧边栏组件
             from Widgets.Sidebars.LeftSidebar import LeftSidebar
             from Widgets.Sidebars.RightSidebar import RightSidebar
 
-            # 创建左侧边栏
             self.left_sidebar = LeftSidebar()
-            self.left_sidebar_widget.layout().addWidget(self.left_sidebar)
+            self.left_sidebar.set_main_window(self)
 
-            # 创建右侧边栏
             self.right_sidebar = RightSidebar()
-            self.right_sidebar_widget.layout().addWidget(self.right_sidebar)
-
-            #设置左侧边栏对中心窗口管理器的引用 #用于left_sidebar的button向center_widget_manager添加dock
-            if hasattr(self, 'center_widget_manager'):
-                self.left_sidebar.set_center_widget_manager(self.center_widget_manager)
+            self.right_sidebar.set_main_window(self)
 
         except ImportError as e:
             print(f"Error importing sidebar components: {e}")
@@ -146,35 +233,112 @@ class MainWindow(QMainWindow):
                 self.topbar.update_maximize_button(self.isMaximized())
 
     def _init_center_widget(self):
-        """初始化中心组件"""
+        """初始化中央多格式预览器（替代 CenterWidgetManage）"""
+        from Widgets.CenterWidget.MultiFormatViewer import MultiFormatViewer
+        from PyQt5.QtWidgets import QVBoxLayout, QSizePolicy
+
         try:
-            # 导入中心组件
-            from Widgets.CenterWidget.CenterWidgetManage import CenterWidgetManage
+            # 为 main_content_widget 创建布局
+            layout = QVBoxLayout(self.main_content_widget)
+            layout.setContentsMargins(0, 0, 0, 0)
+            layout.setSpacing(0)
 
-            # 创建中心窗口管理器实例
-            self.center_widget_manager = CenterWidgetManage(self)
+            # 创建 MultiFormatViewer
+            self.multi_format_viewer = MultiFormatViewer(self)
+            self.multi_format_viewer.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            layout.addWidget(self.multi_format_viewer)
 
-            # 设置中心窗口管理器为无边框，避免重复标题栏 #貌似没什么用
-            self.center_widget_manager.setWindowFlags(Qt.Widget)
-
-            # 将中心窗口管理器添加到主内容区域的布局中
-            self.main_content_widget.layout().addWidget(self.center_widget_manager)
-
-            # 设置中心窗口管理器的大小策略，使其可以扩展
-            self.center_widget_manager.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
-
-            print("Center widget manager initialized successfully")
-
-            # 如果左侧边栏已经初始化，设置其对中心窗口管理器的引用
-            if hasattr(self, 'left_sidebar'):
-                self.left_sidebar.set_center_widget_manager(self.center_widget_manager)
-
+            print("MultiFormatViewer initialized successfully")
 
         except ImportError as e:
-            print(f"Error importing CenterWidget component: {e}")
-            print("Please make sure Widgets/CenterWidget/CenterWidgetManage.py exists")
+            print(f"Error importing MultiFormatViewer: {e}")
+            print("Please make sure Widgets/CenterWidget/MultiFormatViewer.py exists")
         except Exception as e:
             print(f"Error initializing center widget: {e}")
+
+    def _on_file_manage_double_clicked(self, file_path):
+        """文件双击 → 中央预览器打开 + 右侧单文本预览"""
+        # 中央多格式预览器打开
+        success, error_msg = self.multi_format_viewer.open_file(file_path)
+        if not success:
+            print(f"打开文件失败: {error_msg}")
+
+        # 右侧单文本预览（只支持文本文件）
+        self.single_text_preview.open_file(file_path)
+
+    def _init_docks(self):
+        """初始化所有 QDockWidget（左右边栏固定 + 文件管理Dock + 底部路径 + 右侧预览）"""
+        from Widgets.LeftWidget.FileManage import FileManage
+        from Widgets.RightWidget.SingleTextPreview import SingleTextPreview
+        from Widgets.Sidebars.FilePathBar import FilePathBar
+
+        # ── A. 左侧固定边栏 QDockWidget ──
+        self.left_sidebar_dock = QDockWidget("", self)
+        self.left_sidebar_dock.setWidget(self.left_sidebar)
+        self.left_sidebar_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.left_sidebar_dock.setTitleBarWidget(QWidget())
+        self.left_sidebar_dock.setFixedWidth(80)
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.left_sidebar_dock)
+
+        # ── B. 左侧 Dock — FileManage（与边栏水平分割）──
+        self.file_manage_widget = FileManage()
+        self.left_dock = QDockWidget("文件管理", self)
+        self.left_dock.setWidget(self.file_manage_widget)
+        self.left_dock.setAllowedAreas(Qt.LeftDockWidgetArea | Qt.RightDockWidgetArea)
+        self.left_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+        )
+        self.addDockWidget(Qt.LeftDockWidgetArea, self.left_dock)
+        # 用 splitDockWidget 将左侧区域水平拆分为 [边栏 | 文件管理]，边栏永远在左边缘
+        self.splitDockWidget(self.left_sidebar_dock, self.left_dock, Qt.Horizontal)
+        self.left_dock.setVisible(False)  # 默认隐藏
+
+        # ── C. 底部 Dock — FilePathBar（无标题栏）──
+        self.file_path_bar = FilePathBar()
+        self.bottom_dock = QDockWidget("", self)
+        self.bottom_dock.setWidget(self.file_path_bar)
+        self.bottom_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.bottom_dock.setTitleBarWidget(QWidget())
+        self.bottom_dock.setAllowedAreas(Qt.BottomDockWidgetArea)
+        self.addDockWidget(Qt.BottomDockWidgetArea, self.bottom_dock)
+        self.bottom_dock.setVisible(True)
+
+        # ── D. 右侧预览 Dock — SingleTextPreview ──
+        self.single_text_preview = SingleTextPreview()
+        self.right_dock = QDockWidget("预览", self)
+        self.right_dock.setWidget(self.single_text_preview)
+        self.right_dock.setAllowedAreas(Qt.RightDockWidgetArea | Qt.LeftDockWidgetArea)
+        self.right_dock.setFeatures(
+            QDockWidget.DockWidgetMovable | QDockWidget.DockWidgetFloatable | QDockWidget.DockWidgetClosable
+        )
+        self.addDockWidget(Qt.RightDockWidgetArea, self.right_dock)
+
+        # ── E. 右侧固定边栏 QDockWidget（与预览水平分割，永远在最右边缘）──
+        self.right_sidebar_dock = QDockWidget("", self)
+        self.right_sidebar_dock.setWidget(self.right_sidebar)
+        self.right_sidebar_dock.setFeatures(QDockWidget.NoDockWidgetFeatures)
+        self.right_sidebar_dock.setTitleBarWidget(QWidget())
+        self.right_sidebar_dock.setFixedWidth(80)
+        self.addDockWidget(Qt.RightDockWidgetArea, self.right_sidebar_dock)
+        # splitDockWidget: 拆分为 [预览 | 边栏]，边栏永远在右边缘
+        self.splitDockWidget(self.right_dock, self.right_sidebar_dock, Qt.Horizontal)
+        self.right_dock.setVisible(False)  # 预览 dock 默认隐藏
+
+        # ===== 信号连接 =====
+        self.file_manage_widget.file_double_clicked.connect(self._on_file_manage_double_clicked)
+        self.multi_format_viewer.current_file_changed.connect(self.file_path_bar.set_file_path)
+
+    def toggle_left_dock(self):
+        """切换左侧 FileManage dock 显隐"""
+        visible = self.left_dock.isVisible()
+        self.left_dock.setVisible(not visible)
+        return not visible
+
+    def toggle_right_dock(self):
+        """切换右侧预览 dock 显隐"""
+        visible = self.right_dock.isVisible()
+        self.right_dock.setVisible(not visible)
+        return not visible
 
     def closeEvent(self, event):
         """窗口关闭事件"""

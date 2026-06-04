@@ -10,6 +10,9 @@ class RightSidebar(QWidget):
         self._load_ui()
         self._init_connections()
 
+        # 变量
+        self.main_window = None  # 对 MainWindow 的引用
+
     def _load_ui(self):
         """加载UI文件"""
         ui_path = os.path.join(os.path.dirname(__file__), "RightSidebar.ui")
@@ -44,9 +47,10 @@ class RightSidebar(QWidget):
         self.button2.clicked.connect(self._on_button2_clicked)
         
     def _on_button1_clicked(self):
-        """按钮1点击事件"""
-        print("右侧边栏按钮1被点击")
-        # 这里可以添加具体的功能逻辑
+        """按钮1点击事件 - 切换右侧预览 dock 显隐"""
+        print("右侧边栏按钮1被点击 - 切换预览面板")
+        if hasattr(self, 'main_window') and self.main_window:
+            self.main_window.toggle_right_dock()
         
     def _on_button2_clicked(self):
         """按钮2点击事件"""
@@ -68,3 +72,7 @@ class RightSidebar(QWidget):
     def set_button2_tooltip(self, text):
         """设置按钮2提示文本"""
         self.button2.setToolTip(text)
+
+    def set_main_window(self, main_window):
+        """设置对 MainWindow 的引用"""
+        self.main_window = main_window

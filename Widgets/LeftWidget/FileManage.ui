@@ -26,7 +26,7 @@
    <bool>false</bool>
   </property>
   <property name="styleSheet">
-   <string notr="true">background-color: rgb(85, 170, 255);</string>
+   <string notr="true">background-color: #252526;</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -55,29 +55,10 @@
     </layout>
    </item>
    <item>
-    <widget class="QSplitter" name="splitter">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
+    <widget class="QTreeView" name="treeView">
+     <property name="headerHidden">
+      <bool>true</bool>
      </property>
-     <widget class="QTreeView" name="treeView">
-      <property name="headerHidden">
-       <bool>true</bool>
-      </property>
-     </widget>
-     <widget class="QListView" name="listView">
-      <property name="frameShape">
-       <enum>QFrame::NoFrame</enum>
-      </property>
-      <property name="iconSize">
-       <size>
-        <width>48</width>
-        <height>48</height>
-       </size>
-      </property>
-      <property name="viewMode">
-       <enum>QListView::IconMode</enum>
-      </property>
-     </widget>
     </widget>
    </item>
   </layout>

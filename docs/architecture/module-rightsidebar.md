@@ -9,12 +9,14 @@
 ## 1. UI 布局（`RightSidebar.ui`）
 
 ```
-RightSidebar (QWidget, 宽 80px, 背景 #55AAFF)
+RightSidebar (QWidget, 宽 80px, 背景 #2D2D2D)
 └── QVBoxLayout
     ├── button1 (QPushButton, 图标 icon3.ico, tooltip="设置")
     ├── button2 (QPushButton, 图标 icon4.ico, tooltip="帮助")
     └── verticalSpacer (Expanding)
 ```
+
+> 背景色 `#2D2D2D` 参考[统一色彩方案](overview.md#4-统一色彩方案)中的"侧栏"定义。
 
 ---
 

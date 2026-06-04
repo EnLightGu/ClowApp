@@ -31,14 +31,13 @@ def collect_data_files():
     if os.path.exists('icon.ico'):
         data_files.append(('icon.ico', '.'))
 
-    # 添加UI文件 - 根据实际项目结构更新
+    # 添加UI文件 - 共5个UI文件（MultiFormatViewer 纯代码无.ui文件）
     ui_files = [
         'MainWindow.ui',
         'Widgets/Sidebars/Topbar.ui',
         'Widgets/Sidebars/LeftSidebar.ui',
         'Widgets/Sidebars/RightSidebar.ui',
         'Widgets/LeftWidget/FileManage.ui',
-        'Widgets/CenterWidget/CenterWidgetManage.ui'
     ]
 
     for ui_file in ui_files:

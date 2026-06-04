@@ -18,7 +18,8 @@ build_exe.py main()
   ├── collect_data_files()
   │     ├── 主图标: icon.ico
   │     ├── UI 文件 (6 个): MainWindow.ui, Topbar.ui, LeftSidebar.ui,
-  │     │                   RightSidebar.ui, FileManage.ui, CenterWidgetManage.ui
+  │     │                   RightSidebar.ui, FileManage.ui, MultiFileEditor.ui
+  │     │                   ← CenterWidgetManage 无 .ui 文件（代码初始化）
   │     └── 图标文件 (4 个): icon1.ico ~ icon4.ico
   │
   ├── build_with_pyinstaller()
@@ -45,20 +46,22 @@ build_exe.py main()
 
 ### 数据文件清单
 
-| 来源 | 目标目录 |
-|------|----------|
-| `icon.ico` | `.` |
-| `MainWindow.ui` | `.` |
-| `Widgets/Sidebars/Topbar.ui` | `Widgets/Sidebars/` |
-| `Widgets/Sidebars/LeftSidebar.ui` | `Widgets/Sidebars/` |
-| `Widgets/Sidebars/RightSidebar.ui` | `Widgets/Sidebars/` |
-| `Widgets/LeftWidget/FileManage.ui` | `Widgets/LeftWidget/` |
-| `Widgets/CenterWidget/CenterWidgetManage.ui` | `Widgets/CenterWidget/` |
-| `Widgets/Sidebars/icon1.ico ~ icon4.ico` | `Widgets/Sidebars/` |
+| 来源 | 目标目录 | 备注 |
+|------|----------|------|
+| `icon.ico` | `.` | 应用图标 |
+| `MainWindow.ui` | `.` | 主窗口布局 |
+| `Widgets/Sidebars/Topbar.ui` | `Widgets/Sidebars/` | 标题栏 |
+| `Widgets/Sidebars/LeftSidebar.ui` | `Widgets/Sidebars/` | 左侧栏 |
+| `Widgets/Sidebars/RightSidebar.ui` | `Widgets/Sidebars/` | 右侧栏 |
+| `Widgets/LeftWidget/FileManage.ui` | `Widgets/LeftWidget/` | 文件管理 |
+| `Widgets/CenterWidget/MultiFileEditor.ui` | `Widgets/CenterWidget/` | 多文件编辑器 |
+| `Widgets/Sidebars/icon1.ico ~ icon4.ico` | `Widgets/Sidebars/` | 侧栏按钮图标 |
+
+> **CenterWidgetManage** 不再需要 `.ui` 文件，其布局完全由代码初始化（`QHBoxLayout` + 手动添加 widget）。
 
 ### 隐藏导入列表
 
-`PyQt5`, `PyQt5.QtCore`, `PyQt5.QtGui`, `PyQt5.QtWidgets`, `PyQt5.uic`, `ctypes`, `ctypes.wintypes`, `platform`, `os`, `sys`
+`PyQt5`, `PyQt5.QtCore`, `PyQt5.QtGui`, `PyQt5.QtWidgets`, `PyQt5.uic`, `ctypes`, `ctypes.wintypes`, `platform`, `os`, `sys`, `chardet`（可选）
 
 ---
 

@@ -29,7 +29,7 @@
 ## 3. UI 布局（`Topbar.ui`）
 
 ```
-Topbar (QWidget, 高 40~80px, 背景 #F6F2EE)
+Topbar (QWidget, 高 40~80px, 背景 #F6F2EE)  ← 参考统一色彩方案
 └── QHBoxLayout (间距 10, 边距 10)
     ├── title_label (QLabel, 黑字 14px bold, 文本"一个应用")
     ├── horizontalSpacer (弹性格子)

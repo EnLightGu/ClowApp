@@ -18,9 +18,6 @@ class Topbar(QWidget):
         ui_path = os.path.join(os.path.dirname(__file__), "Topbar.ui")
         uic.loadUi(ui_path, self)
 
-        # 设置窗口标志，使其成为标题栏
-        self.setWindowFlags(Qt.FramelessWindowHint)
-
         # 连接按钮信号
         self.minimize_button.clicked.connect(self._on_minimize_clicked)
         self.maximize_button.clicked.connect(self._on_maximize_clicked)

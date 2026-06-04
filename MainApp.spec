@@ -5,7 +5,7 @@ a = Analysis(
     ['main.py'],
     pathex=[],
     binaries=[],
-    datas=[('icon.ico', '.'), ('MainWindow.ui', '.'), ('Widgets/Sidebars/Topbar.ui', 'Widgets/Sidebars'), ('Widgets/Sidebars/LeftSidebar.ui', 'Widgets/Sidebars'), ('Widgets/Sidebars/RightSidebar.ui', 'Widgets/Sidebars'), ('Widgets/LeftWidget/FileManage.ui', 'Widgets/LeftWidget'), ('Widgets/CenterWidget/CenterWidgetManage.ui', 'Widgets/CenterWidget'), ('Widgets/Sidebars/icon1.ico', 'Widgets/Sidebars'), ('Widgets/Sidebars/icon2.ico', 'Widgets/Sidebars'), ('Widgets/Sidebars/icon3.ico', 'Widgets/Sidebars'), ('Widgets/Sidebars/icon4.ico', 'Widgets/Sidebars')],
+    datas=[('icon.ico', '.'), ('MainWindow.ui', '.'), ('Widgets/Sidebars/Topbar.ui', 'Widgets/Sidebars'), ('Widgets/Sidebars/LeftSidebar.ui', 'Widgets/Sidebars'), ('Widgets/Sidebars/RightSidebar.ui', 'Widgets/Sidebars'), ('Widgets/LeftWidget/FileManage.ui', 'Widgets/LeftWidget'), ('Widgets/Sidebars/icon1.ico', 'Widgets/Sidebars'), ('Widgets/Sidebars/icon2.ico', 'Widgets/Sidebars'), ('Widgets/Sidebars/icon3.ico', 'Widgets/Sidebars'), ('Widgets/Sidebars/icon4.ico', 'Widgets/Sidebars')],
     hiddenimports=['PyQt5', 'PyQt5.QtCore', 'PyQt5.QtGui', 'PyQt5.QtWidgets', 'PyQt5.uic', 'ctypes', 'ctypes.wintypes', 'platform', 'os', 'sys'],
     hookspath=[],
     hooksconfig={},
