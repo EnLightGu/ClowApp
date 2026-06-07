@@ -56,8 +56,8 @@ class LineNumberArea(QWidget):
 # ════════════════════════════════════════════════════════════════
 # CodeEditor
 # ════════════════════════════════════════════════════════════════
-class CodeEditor(QPlainTextEdit):
-    """代码编辑器（从 MultiFileEditor 复用）"""
+class PreviewCodeEditor(QPlainTextEdit):
+    """预览专用只读代码编辑器（为避免与 CenterWidget.CodeEditor 重名）"""
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -121,7 +121,7 @@ class SingleTextPreview(QWidget):
         layout = QVBoxLayout(self)
         layout.setContentsMargins(0, 0, 0, 0)
 
-        self.editor = CodeEditor()
+        self.editor = PreviewCodeEditor()
         self.editor.setReadOnly(True)
         layout.addWidget(self.editor)
 

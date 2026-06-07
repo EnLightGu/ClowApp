@@ -20,3 +20,4 @@ THEEXE/
 # Example / backup
 examples/
 *副本*
+*.bak

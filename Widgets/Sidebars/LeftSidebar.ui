@@ -29,15 +29,27 @@
 QPushButton {
     background-color: transparent;
     border: none;
-    padding: 15px;
-    margin: 5px;
-    border-radius: 5px;
+    padding: 8px;
+    margin: 4px;
+    border-radius: 6px;
+    min-width: 48px;
+    min-height: 48px;
+    max-width: 64px;
+    max-height: 64px;
 }
 QPushButton:hover {
-    background-color: #A9A9A9;
+    background-color: #3C3C3C;
+    border: 1px solid #454545;
 }
 QPushButton:pressed {
-    background-color: #0000FF;
+    background-color: #454545;
+}
+QToolTip {
+    background-color: #333333;
+    color: #FFFFFF;
+    border: 1px solid #454545;
+    padding: 4px 8px;
+    font-size: 12px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">

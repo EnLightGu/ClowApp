@@ -31,13 +31,20 @@ def collect_data_files():
     if os.path.exists('icon.ico'):
         data_files.append(('icon.ico', '.'))
 
-    # 添加UI文件 - 共5个UI文件（MultiFormatViewer 纯代码无.ui文件）
+    # UI 文件 (9 个实际存在的 .ui 文件):
+    # MainWindow.ui, Topbar.ui, LeftSidebar.ui, RightSidebar.ui,
+    # FileManage.ui, LogicDiagramWidget.ui, LogicTextWidget.ui,
+    # LogicSaveDialog.ui, LogicLoadDialog.ui
     ui_files = [
         'MainWindow.ui',
         'Widgets/Sidebars/Topbar.ui',
         'Widgets/Sidebars/LeftSidebar.ui',
         'Widgets/Sidebars/RightSidebar.ui',
         'Widgets/LeftWidget/FileManage.ui',
+        'Widgets/RightWidget/LogicDiagramWidget.ui',
+        'Widgets/RightWidget/LogicTextWidget.ui',
+        'Widgets/RightWidget/LogicSaveDialog.ui',
+        'Widgets/RightWidget/LogicLoadDialog.ui',
     ]
 
     for ui_file in ui_files:
@@ -55,7 +62,9 @@ def collect_data_files():
         'Widgets/Sidebars/icon1.ico',
         'Widgets/Sidebars/icon2.ico',
         'Widgets/Sidebars/icon3.ico',
-        'Widgets/Sidebars/icon4.ico'
+        'Widgets/Sidebars/icon4.ico',
+        'Widgets/Sidebars/icon_logic_gate.ico',
+        'Widgets/Sidebars/icon_logic_txt.ico',
     ]
 
     for icon_file in icon_files:
@@ -108,6 +117,9 @@ def build_with_pyinstaller():
         'platform',
         'os',
         'sys',
+        'chardet',
+        'sqlite3',
+        'json',
     ]
 
     for imp in hidden_imports:

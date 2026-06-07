@@ -60,8 +60,9 @@ class Topbar(QWidget):
     def mousePressEvent(self, event):
         """鼠标按下事件 - 只处理标题栏区域的拖动"""
         if event.button() == Qt.LeftButton:
-            # 启动窗口拖动
-            self.window().windowHandle().startSystemMove()
+            w = self.window().windowHandle()
+            if w is not None:
+                w.startSystemMove()
             event.accept()
         else:
             super().mousePressEvent(event)

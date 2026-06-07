@@ -45,8 +45,7 @@
        </size>
       </property>
       <property name="styleSheet">
-       <string notr="true">background-color: #F6F2EE;</string>
-<!--       <string notr="true">background-color: white</string>-->
+       <string notr="true">background-color: #333333; color: #FFFFFF;</string>
       </property>
       <layout class="QVBoxLayout" name="verticalLayout_5">
        <property name="spacing">

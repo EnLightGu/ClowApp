@@ -1,39 +1,39 @@
 # 整体架构
 
-> **版本：** 0.02（新版架构）｜ **框架：** PyQt5 ｜ **Python：** 3.8+ ｜ **更新：** 2026-06-04
+> **版本：** 0.02（精化版）｜ **框架：** PyQt5 + QDockWidget ｜ **Python：** 3.8+ ｜ **更新：** 2026-06-07
 
 ---
 
 ## 1. 项目定位
 
-ClowApp 是一个**跨平台模块化桌面应用**，采用**自定义无边框窗体 + 面板式中央布局**架构。核心设计理念是让应用功能以独立 Widget 的形式通过侧栏按钮动态切换。中央区域默认提供**多文件文本预览器（MultiFileEditor）**，左侧面板用于文件管理等辅助工具。
+EnApp 是一个**跨平台模块化桌面应用**，采用**自定义无边框窗体 + QDockWidget 面板式布局**架构。核心设计理念是让功能以独立 Widget + Dock 的形式通过侧栏按钮动态切换。
+
+中央区域提供**多文件可编辑文本预览器（MultiFormatViewer）**，左侧面板文件管理通过 `CenterWidgetManage` 以内部面板形式管理（非 QDockWidget），右侧 Dock 提供预览 + 逻辑分析模块（逻辑门图形编辑器 + 文本逻辑编辑器 + 逻辑数据库）。
 
 ---
 
 ## 2. 架构全景图
 
 ```
-                          main.py (入口)
-                              │
-                         MainWindow (QMainWindow)
-                    ┌───────────────────────────────┐
-                    │         ┌─────────────┐        │
-                    │         │   Topbar    │        │  ← 自定义标题栏（最小化/最大/关闭 + 拖拽）
-                    │         └─────────────┘        │
-                    │  ┌──────┬────────────────┐     │
-                    │  │ Left │   Center       │     │
-                    │  │Side  │  Widget        │     │
-                    │  │ bar  │  Manage        │     │
-                    │  │(80px)│  (QWidget)     │     │
-                    │  │      │ ┌────┬────────┐│     │
-                    │  │button│ │左  │MultiFile││     │  ← 左侧面板可选（如 FileManage）
-                    │  │①→②→ │ │面板│Editor  ││     │  ← MultiFileEditor 常驻中央
-                    │  │      │ └────┴────────┘│     │
-                    │  └──────┴───────────────┴┘     │
-                    │              │                  │
-                    └──────────────┴──────────────────┘
-                        Linux: FramelessWindowHint
-                        Windows: Win32 API 去标题栏
+                     main.py (入口)
+                         │
+                    MainWindow (QMainWindow)
+               ┌──────────────────────────────────────┐
+               │          Topbar (#333333)              │
+               ├────────┬───────────────────┬──────────┤
+               │LeftSide│  中央区域          │RightSide │
+               │bar Dock│  CenterWidgetManage│bar Dock  │
+               │(80px)  │  ├─ FileManage     │(80px)    │
+               │  #2D2D │  └─ MultiFormatView│  #2D2D   │
+               │        │  (可编辑)           │          │
+               │        │                    ├──────────┤
+               │        │                    │预览 Dock │
+               │        │                    │逻辑图示  │
+               │        │                    │文本逻辑  │
+               └────────┴────────────────────┴──────────┘
+               ┌──────────────────────────────────────┐
+               │          底部 Dock (FilePathBar)       │
+               └──────────────────────────────────────┘
 ```
 
 ---
@@ -43,30 +43,39 @@ ClowApp 是一个**跨平台模块化桌面应用**，采用**自定义无边框
 | 原则 | 说明 |
 |------|------|
 | **UI 与逻辑分离** | 布局由 Qt Designer（`.ui` 文件）定义，业务逻辑在 `.py` 中实现 |
-| **组件化** | 每个 Widget 独立封装类，通过组合方式集成到主窗口 |
-| **面板式布局** | 中央区域为 `QWidget`，左面板（可选）+ 中央编辑器（常驻），避免 QMainWindow 嵌套 |
-| **职责单一** | LeftSidebar 仅负责按钮→面板切换；MainWindow 统一管理组件创建和信号连接 |
-| **多文件预览** | 中央区域默认提供基于标签页的文本文件预览，支持同时打开多个文件 |
+| **组件化** | 每个 Widget 独立封装类，通过 QDockWidget 集成到主窗口 |
+| **Dock 面板式布局** | 以 QDockWidget 管理所有侧栏面板，灵活切换/停靠/浮动 |
+| **职责单一** | 每个组件聚焦一个功能领域 |
+| **多文件编辑** | 中央区域提供基于标签页的可编辑文本编辑器，支持语法高亮 |
+| **灰色调统一配色** | 全部界面采用不同层次的灰色背景 + 白色文字 |
 | **跨平台适配** | 通过 `platform.system()` 差异化处理 Windows 与 Linux 窗口样式 |
 
 ---
 
 ## 4. 统一色彩方案
 
-为避免各组件颜色冲突，定义以下统一的调色板：
+全部界面采用**灰色调背景 + 白色文字**，以下为完整调色板：
 
 | 色名 | 色值 | 用途 |
 |------|------|------|
-| 背景色 - 主区域 | `#1E1E1E` | CentralWidget、MultiFileEditor 背景 |
-| 背景色 - 面板 | `#252526` | FileManage、侧边面板、行号区域 |
+| 背景色 - 主区域 | `#1E1E1E` | 中央编辑器、画布等最深灰背景 |
+| 背景色 - 面板 | `#252526` | Dock 面板、侧面板容器、表区域 |
 | 背景色 - 侧栏 | `#2D2D2D` | LeftSidebar、RightSidebar |
-| 背景色 - 顶栏 | `#F6F2EE` | Topbar |
-| 背景色 - 文件管理 | `#252526` | FileManage 主区域（与面板一致） |
-| 前景色 - 文字 | `#CCCCCC` | 默认文字 |
-| 前景色 - 亮色 | `#FFFFFF` | 高亮文字、当前行号 |
-| 强调色 | `#007ACC` | 选中项、焦点边框 |
+| 背景色 - 顶栏/工具栏 | `#333333` | Topbar、工具栏背景 |
+| 背景色 - 高亮/hover | `#3C3C3C` | 按钮悬停、列表选中 |
+| 背景色 - 边框/分隔 | `#454545` | 分割线、边框、更亮 hover |
+| 前景色 - 亮白 | `#FFFFFF` | 主要文字、标题、标签 |
+| 前景色 - 浅灰 | `#CCCCCC` | 次要文字、说明 |
+| 前景色 - 中灰 | `#888888` | 禁用文字、行号、占位符 |
+| 强调色 | `#007ACC` | 选中项、焦点边框、超链接 |
+| 次强调色 | `#569CD6` | 语法关键字高亮（蓝色系） |
 
-> 各组件模块的颜色统一引用此表，不再各自定义独立色值。
+### 文档内引用
+
+所有模块文档中的颜色值统一引用此表，不再各自定义独立色值。
+
+🔍 **逻辑分析模块域专用色：** 逻辑门填充 `#2D4A7A`、引脚青色 `#4EC9B0`、
+连线米白 `#DCDCAA`、选中金色 `#FFD700`，参见 [`module-logic-diagram.md`](module-logic-diagram.md)。
 
 ---
 
@@ -75,43 +84,43 @@ ClowApp 是一个**跨平台模块化桌面应用**，采用**自定义无边框
 ```
 ClowApp/
 ├── 入口层
-│   └── main.py                    # QApplication 初始化，创建主窗口
+│   └── main.py                         # QApplication 初始化，创建主窗口
 │
 ├── 主窗口层
-│   ├── MainWindow.py              # 窗口管理 + 跨平台去标题栏 + 组件组装 + 信号连接
-│   └── MainWindow.ui              # 四分区布局（顶栏/左栏/中栏/右栏）
+│   ├── MainWindow.py                   # 窗口管理 + 跨平台去标题栏
+│   └── MainWindow.ui                   # 四分区布局（顶栏/左栏/中栏/右栏）
 │
 ├── 组件层 (Widgets/)
-│   ├── Sidebars/                  # 顶栏 + 左栏 + 右栏
-│   │   ├── Topbar.py              # 自定义标题栏
-│   │   ├── LeftSidebar.py         # 左侧按钮面板（仅切换面板显隐，不参与组件创建）
-│   │   └── RightSidebar.py        # 右侧工具栏（预留）
+│   ├── Sidebars/                       # 顶栏 + 左栏 + 右栏
+│   │   ├── Topbar.py + Topbar.ui       # 自定义标题栏
+│   │   ├── LeftSidebar.py + .ui        # 左侧按钮面板
+│   │   ├── RightSidebar.py + .ui       # 右侧工具按钮
+│   │   └── FilePathBar.py + .ui        # 底部路径栏
 │   │
-│   ├── CenterWidget/              # 中央区域
-│   │   ├── CenterWidgetManage.py  # QWidget 面板管理器 + MultiFileEditor
-│   │   └── MultiFileEditor.py     # 多文件文本预览器（QTabWidget + QPlainTextEdit）
+│   ├── CenterWidget/                   # 中央区域
+│   │   └── MultiFormatViewer.py + .ui  # 多文件可编辑文本预览器
 │   │
-│   ├── LeftWidget/                # 左侧组件
-│   │   └── FileManage.py          # 文件浏览器（仅 treeView + 目录优先排序）
+│   ├── LeftWidget/                     # 左侧组件
+│   │   └── FileManage.py + .ui         # 文件浏览器
 │   │
-│   ├── RightWidget/               # (预留)
-│   └── BottomWidget/              # (预留)
+│   └── RightWidget/                    # 右侧组件
+│       ├── SingleTextPreview.py + .ui  # 单文本预览
+│       ├── LogicDiagramWidget.py + .ui  # 🆕 逻辑门图形编辑器
+│       ├── LogicTextWidget.py + .ui     # 🆕 文本逻辑编辑器
+│       ├── LogicConverter.py            # 🆕 双向转化器（无 UI）
+│       ├── LogicDatabase.py             # 🆕 逻辑数据库（无 UI）
+│       ├── LogicSaveDialog.py + .ui     # 🆕 保存对话框
+│       └── LogicLoadDialog.py + .ui     # 🆕 加载对话框
+│
+├── 图标文件
+│   ├── icon1.ico ~ icon4.ico           # 已有
+│   ├── icon_logic_gate.ico              # 🆕 逻辑门图标
+│   └── icon_logic_txt.ico               # 🆕 文本逻辑图标
 │
 └── 构建层
-    ├── build_exe.py               # PyInstaller 打包脚本
-    └── MainApp.spec               # 打包配置
+    ├── build_exe.py                    # PyInstaller 打包
+    └── MainApp.spec                    # 打包配置
 ```
-
-### 相较 v0.01 的变更
-
-| 变更 | 模块 | 说明 |
-|------|------|------|
-| ✂️ 移除 | `FileManage` | 移除 `listView`（列表视图），仅保留 `treeView` |
-| 🆕 新增 | `CenterWidget/MultiFileEditor.py` | 多标签文本文件预览器 |
-| 🔄 重构 | `CenterWidgetManage` | `QMainWindow` → `QWidget`，消除嵌套；改为面板式布局 |
-| 🔄 重构 | `MainWindow` | 接管组件创建和信号连接，`LeftSidebar` 回归纯按钮职责 |
-| 🆕 新增 | FileManage → MainWindow → CenterWidget | 信号链路闭环 |
-| 🎨 统一 | 色彩方案 | 全局调色板，各模块颜色统一 |
 
 ---
 
@@ -121,61 +130,54 @@ ClowApp/
 
 ```
 main()
-  │
   └── MainWindow()
-        ├── uic.loadUi("MainWindow.ui")         # 加载四分区布局
-        ├── 平台判断 + 移除原生标题栏              # Linux / Windows / macOS(暂不支持)
-        ├── setWindowTitle("Main Window")
-        ├── _init_topbar()                       # ① 初始化自定义标题栏
-        ├── _init_center_widget()                # ② 中央区域管理器（必须在 sidebars 之前）
-        └── _init_sidebars()                     # ③ 初始化左右侧栏 + 注入 manager 引用
-              ├── 创建 CenterWidgetManage(QWidget)
-              │   ├── 左面板容器（默认隐藏）
-              │   └── MultiFileEditor（常驻中央）
-              ├── 注册 FileManage 面板         ← 预创建但默认隐藏
-              └── 连接 file_double_clicked 信号  ← 统一管理
+        ├── uic.loadUi("MainWindow.ui")
+        ├── 平台判断 + 跨平台去标题栏
+        ├── _init_topbar()
+        ├── _init_center_widget()
+        ├── _init_sidebars()
+        └── _init_docks()    ← 创建所有 QDockWidget
 ```
 
-### 6.2 面板开关流程
-
-```
-用户点击左侧栏 button1
-  │
-  └── LeftSidebar._on_button1_clicked()
-        └── toggle_panel("file_manage")
-              └── CenterWidgetManage 切换左面板可见性
-```
-
-### 6.3 文件预览流程
+### 6.2 文件编辑流程
 
 ```
 用户双击 treeView 中的文本文件
   │
-  ├── FileManage._on_tree_item_double_clicked()
-  │     ├── 文本文件 → emit file_double_clicked(file_path)
-  │     └── 其他 → print 日志
+  ├── FileManage emit file_double_clicked(path)
   │
   ▼
 MainWindow._on_file_manage_double_clicked()
   │
-  ├── center_widget_manager.open_file_in_editor(file_path)
-  │     └── return (success, error_msg)
+  ├── multi_format_viewer.open_file(path)     # 中央可编辑打开
+  └── single_text_preview.open_file(path)     # 右侧预览
+```
+
+### 6.3 逻辑分析交互
+
+```
+用户点击右边栏 button2 (逻辑门编辑器)
+  │
+  ├── MainWindow.toggle_logic_diagram_dock()
   │
   ▼
-CenterWidgetManage
+LogicDiagramWidget 显示
+  ├── 拖放 AND/OR/NOT 门
+  ├── 连线 → 自动生成文本逻辑
+  ├── 保存到数据库
   │
-  └── MultiFileEditor.open_file(file_path)
-        ├── 文件已打开 → 切换到已有标签页
-        │
-        ├── 文件 > 10MB → 弹出确认对话框
-        │     ├── 确认 → 继续加载
-        │     └── 取消 → return (False, "用户取消")
-        │
-        └── 未打开（且 ≤ 10MB）→ 编码检测
-              ├── chardet 自动检测
-              ├── fallback 链: UTF-8 → GBK → Latin-1
-              ├── 全部失败 → return (False, "编码错误")
-              └── 成功 → 新建标签页 + QPlainTextEdit（只读 + 行号）
+  ▼ (双向转化)
+LogicTextWidget 同步显示文本表达式
+```
+
+### 6.4 面板开关流程
+
+```
+用户点击侧边栏按钮
+  │
+  └── RightSidebar._on_buttonN_clicked()
+        └── main_window.toggle_xxx_dock()
+              └── QDockWidget.setVisible(not visible)
 ```
 
 ---
@@ -184,29 +186,49 @@ CenterWidgetManage
 
 | 平台 | 去标题栏方式 | 保留功能 | 状态 |
 |------|-------------|----------|------|
-| **Linux** | `setWindowFlags(Qt.FramelessWindowHint)` | 无（靠 Topbar 实现窗口控制） | ✅ 已实现 |
-| **Windows** | Win32 API: `SetWindowLongPtrW` + `SetWindowPos` | 缩放边框、最小/最大按钮、系统菜单 | ✅ 已实现 |
-| **macOS** | — | — | ❌ 暂不支持（需 PyObjC 桥接） |
+| **Linux** | `setWindowFlags(Qt.FramelessWindowHint)` | 无（靠 Topbar 实现窗口控制） | ✅ |
+| **Windows** | Win32 API `SetWindowLongPtrW` + `SetWindowPos` | 缩放边框、系统菜单 | ✅ |
+| **macOS** | — | — | ❌ 暂不支持 |
 
 ---
 
 ## 8. 构建部署
 
 - **运行时：** `python main.py`
-- **打包：** `python build_exe.py` → 产出一个 `THEEXE/MainApp.exe` 单文件
+- **打包：** `python build_exe.py` → `THEEXE/MainApp.exe` 单文件
 - **工具链：** PyInstaller `--onefile --windowed`
-- **UI 数据文件：** 6 个 `.ui` 文件（`CenterWidgetManage` 使用代码初始化，无需 `.ui` 文件）
 
 ---
 
-## 9. 扩展点
+## 9. 架构文档索引
 
-| 扩展方向 | 操作方式 |
-|----------|----------|
-| 新增面板组件 | 创建 widget → `register_panel()` 注册 → 侧栏按钮绑定 `toggle_panel()` |
-| 新增侧边栏按钮 | 编辑对应 `.ui` 文件 + `.py` 绑定信号 |
-| 文本编辑器增强 | 在 `MultiFileEditor` 中添加语法高亮、搜索、编码选择等 |
-| 编码自动检测 | 引入 `chardet` 或 `cchardet` |
-| 文件管理增强 | 添加右键菜单（删除/重命名/新建） |
-| 状态持久化 | 打开的文件列表持久化到 `QSettings` |
-| 国际化 | 引入 `QTranslator` |
+| 层级 | 文档 | 内容 |
+|------|------|------|
+| **整体架构** | `overview.md` | ✅ 本文档 |
+| **入口层** | `module-entry.md` | `main.py` |
+| **主窗口层** | `module-mainwindow.md` | `MainWindow` + QDockWidget 集成 |
+| **标题栏** | `module-topbar.md` | `Topbar` |
+| **左侧边栏** | `module-leftsidebar.md` | `LeftSidebar` |
+| **右侧边栏** | `module-rightsidebar.md` | `RightSidebar`（含新按钮） |
+| **中央区域管理** | `module-center-manage.md` 🆕 | `CenterWidgetManage` — 面板注册与切换 |
+| **中央区域** | `module-centerwidget.md` | `MultiFormatViewer` 可编辑预览 |
+| **文件管理** | `module-filemanage.md` | `FileManage` |
+| **逻辑门图形** | `module-logic-diagram.md` 🆕 | `LogicDiagramWidget` |
+| **文本逻辑** | `module-logic-text.md` 🆕 | `LogicTextWidget` + `LogicConverter` |
+| **逻辑数据库** | `module-logic-db.md` 🆕 | `LogicDatabase` |
+| **构建部署** | `module-build.md` | `build_exe.py` 打包 |
+
+---
+
+## 10. 扩展点
+
+| 扩展方向 | 说明 |
+|----------|------|
+| 中央区域管理器 | [`module-center-manage.md`](module-center-manage.md) 🆕 — `CenterWidgetManage` 面板注册与切换 |
+| 新增 Dock 面板 | 创建 Widget + .ui → MainWindow._init_docks() 注册 → 侧栏按钮控制 |
+| 逻辑门类型扩展 | 在 `LogicGateItem.GATE_TYPES` 中添加新门 |
+| 真值表生成 | 根据逻辑图自动生成真值表 |
+| 逻辑化简 | 集成 Quine-McCluskey 算法 |
+| 仿真 | 输入值实时计算输出 |
+| 导出 HDL | Verilog / VHDL 导出 |
+| 多用户共享 | SQLite → PostgreSQL 迁移 |

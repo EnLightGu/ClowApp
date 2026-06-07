@@ -1,0 +1,365 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>LogicDiagramWidget</class>
+ <widget class="QWidget" name="LogicDiagramWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>800</width>
+    <height>600</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Logic Diagram Editor</string>
+  </property>
+  <property name="styleSheet">
+   <string>background-color: #252526;</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout" stretch="0,1">
+   <property name="spacing">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QWidget" name="toolbar_widget" native="true">
+     <property name="minimumSize">
+      <size>
+       <width>0</width>
+       <height>36</height>
+      </size>
+     </property>
+     <property name="styleSheet">
+      <string>background-color: #333333;</string>
+     </property>
+     <layout class="QHBoxLayout" name="toolbar_layout">
+      <property name="spacing">
+       <number>2</number>
+      </property>
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>2</number>
+      </property>
+      <property name="rightMargin">
+       <number>4</number>
+      </property>
+      <property name="bottomMargin">
+       <number>2</number>
+      </property>
+      <item>
+       <widget class="QToolButton" name="toolbar_and_btn">
+        <property name="text">
+         <string>AND</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextOnly</enum>
+        </property>
+        <property name="toolTip">
+         <string>添加 AND 门</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>40</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 6px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_or_btn">
+        <property name="text">
+         <string>OR</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextOnly</enum>
+        </property>
+        <property name="toolTip">
+         <string>添加 OR 门</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>36</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 6px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_not_btn">
+        <property name="text">
+         <string>NOT</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextOnly</enum>
+        </property>
+        <property name="toolTip">
+         <string>添加 NOT 门</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>36</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 6px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_nand_btn">
+        <property name="text">
+         <string>NAND</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextOnly</enum>
+        </property>
+        <property name="toolTip">
+         <string>添加 NAND 门</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>44</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 6px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_nor_btn">
+        <property name="text">
+         <string>NOR</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextOnly</enum>
+        </property>
+        <property name="toolTip">
+         <string>添加 NOR 门</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>36</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 6px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_xor_btn">
+        <property name="text">
+         <string>XOR</string>
+        </property>
+        <property name="toolButtonStyle">
+         <enum>Qt::ToolButtonTextOnly</enum>
+        </property>
+        <property name="toolTip">
+         <string>添加 XOR 门</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>36</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 6px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="separator1">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="styleSheet">
+         <string>color: #555555; background-color: #555555; max-width: 1px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_input_btn">
+        <property name="toolTip">
+         <string>添加输入引脚</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 4px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_output_btn">
+        <property name="toolTip">
+         <string>添加输出引脚</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 4px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="separator2">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="styleSheet">
+         <string>color: #555555; background-color: #555555; max-width: 1px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_wire_btn">
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>连线模式</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 4px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_select_btn">
+        <property name="checkable">
+         <bool>true</bool>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+        <property name="toolTip">
+         <string>选中模式</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 4px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="Line" name="separator3">
+        <property name="orientation">
+         <enum>Qt::Vertical</enum>
+        </property>
+        <property name="styleSheet">
+         <string>color: #555555; background-color: #555555; max-width: 1px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_clear_btn">
+        <property name="toolTip">
+         <string>清除全部</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 4px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QToolButton" name="toolbar_to_text_btn">
+        <property name="toolTip">
+         <string>导出为文本</string>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>30</width>
+          <height>28</height>
+         </size>
+        </property>
+        <property name="styleSheet">
+         <string>color: #FFFFFF; background-color: #3C3C3C; border: 1px solid #454545; border-radius: 3px; padding: 2px 4px;</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="toolbar_spacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QGraphicsView" name="gate_canvas">
+     <property name="styleSheet">
+      <string>background-color: #1E1E1E; border: none;</string>
+     </property>
+     <property name="verticalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOn</enum>
+     </property>
+     <property name="horizontalScrollBarPolicy">
+      <enum>Qt::ScrollBarAlwaysOn</enum>
+     </property>
+     <property name="interactive">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>QGraphicsView</class>
+   <extends>QWidget</extends>
+   <header>qgraphicsview.h</header>
+  </customwidget>
+  <customwidget>
+   <class>Line</class>
+   <extends>QFrame</extends>
+   <header>qframe.h</header>
+  </customwidget>
+ </customwidgets>
+ <resources/>
+ <connections/>
+</ui>

@@ -3,6 +3,8 @@ from PyQt5.QtCore import Qt, QDir, QSortFilterProxyModel, pyqtSignal, QFileSyste
 import os
 from PyQt5 import uic
 
+from ..shared_constants import TEXT_EXTENSIONS
+
 
 class DirectoryFirstProxyModel(QSortFilterProxyModel):
     """排序代理模型：目录始终排在文件前面"""
@@ -233,16 +235,11 @@ class FileManage(QWidget):
 
     def _is_text_file(self, file_path):
         """判断文件是否可以被 MultiFormatViewer 预览"""
-        preview_extensions = {
-            '.txt', '.md', '.py', '.js', '.json', '.xml', '.yaml', '.yml',
-            '.ini', '.cfg', '.conf', '.log', '.csv', '.html', '.css',
-            '.sh', '.bat', '.c', '.cpp', '.h', '.java', '.sql', '.toml',
-            '.gitignore', '.env',
-            '.xlsx', '.xls',  # 表格文件
-        }
+        # 合并共享的文本扩展名和表格扩展名
+        _grid_extensions = {'.xlsx', '.xls'}
         _, ext = os.path.splitext(file_path)
         basename = os.path.basename(file_path)
-        if ext.lower() in preview_extensions:
+        if ext.lower() in TEXT_EXTENSIONS or ext.lower() in _grid_extensions:
             return True
         if basename in ('Dockerfile', 'Makefile'):
             return True

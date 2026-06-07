@@ -12,6 +12,8 @@ class LeftSidebar(QWidget):
 
         # 变量
         self.main_window = None  # 对 MainWindow 的引用
+        self.center_widget_manager = None  # 对 CenterWidgetManage 的引用
+        self.FILE_MANAGE_PANEL_ID = "file_manage"  # FileManage 面板标识
 
     def _load_ui(self):
         """加载UI文件"""
@@ -46,9 +48,11 @@ class LeftSidebar(QWidget):
         self.button2.clicked.connect(self._on_button2_clicked)
         
     def _on_button1_clicked(self):
-        """按钮1点击事件 - 切换左侧 FileManage dock 显隐"""
+        """按钮1点击事件 - 切换 FileManage 面板显隐"""
         print("左侧边栏按钮1被点击 - 切换文件管理面板")
-        if hasattr(self, 'main_window') and self.main_window:
+        if self.center_widget_manager:
+            self.center_widget_manager.toggle_panel(self.FILE_MANAGE_PANEL_ID)
+        elif self.main_window:
             self.main_window.toggle_left_dock()
     def _on_button2_clicked(self):
         """按钮2点击事件"""
@@ -74,3 +78,7 @@ class LeftSidebar(QWidget):
     def set_main_window(self, main_window):
         """设置对 MainWindow 的引用"""
         self.main_window = main_window
+
+    def set_center_widget_manager(self, manager):
+        """设置对 CenterWidgetManage 的引用"""
+        self.center_widget_manager = manager

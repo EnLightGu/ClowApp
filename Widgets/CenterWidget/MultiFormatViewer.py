@@ -1,8 +1,11 @@
+# -*- coding: utf-8 -*-
 """
-MultiFormatViewer — 中央多格式预览器
+MultiFormatViewer — 中央多格式预览 / 编辑器
 
 替换原有的 CenterWidgetManage + MultiFileEditor。
-根据文件扩展名自动选择文本页或表格页显示。
+v0.02: 可编辑升级 — 新增保存/查找/替换/撤销/重做等编辑操作，
+        close_file 未保存检测，快捷键 Ctrl+S / Ctrl+Shift+S，
+        内部修改标签页标记 " *"，外部修改标记 "● "。
 """
 import csv
 import io
@@ -10,28 +13,22 @@ import os
 from typing import Optional, Tuple
 
 from PyQt5.QtCore import Qt, pyqtSignal, QFileSystemWatcher
-from PyQt5.QtGui import QFont
+from PyQt5.QtGui import QFont, QKeySequence, QTextCursor
 from PyQt5.QtWidgets import (
     QWidget, QVBoxLayout, QTabWidget, QLabel,
     QTableWidget, QTableWidgetItem, QMessageBox, QTabBar,
-    QHeaderView, QAbstractItemView,
+    QHeaderView, QAbstractItemView, QFileDialog, QShortcut,
 )
 
-# ── 复用 CodeEditor（带行号） ─────────────────────────────────
+# ── 复用 CodeEditor（带行号、可编辑、语法高亮） ──────────────
 from Widgets.CenterWidget.CodeEditor import CodeEditor
+
+# ── 共享常量 ──────────────────────────────────────────────
+from ..shared_constants import TEXT_EXTENSIONS
 
 # ════════════════════════════════════════════════════════════════
 # 常量
 # ════════════════════════════════════════════════════════════════
-
-# 文本类扩展名
-TEXT_EXTENSIONS = {
-    ".txt", ".py", ".js", ".ts", ".md", ".json", ".xml",
-    ".yaml", ".yml", ".ini", ".cfg", ".conf", ".log",
-    ".html", ".css", ".scss", ".sh", ".bat", ".ps1",
-    ".c", ".cpp", ".h", ".hpp", ".java", ".sql", ".toml",
-    ".gitignore", ".env",
-}
 
 # 无扩展名的文本文件名
 TEXT_FILENAMES = {"Dockerfile", "Makefile"}
@@ -42,19 +39,29 @@ GRID_EXTENSIONS = {".csv", ".tsv", ".xlsx", ".xls"}
 # 最大文件大小（默认 10 MB）
 MAX_FILE_SIZE = 10 * 1024 * 1024
 
+# 标记符号
+MARKER_EXTERNAL = "\u25cf "       # "● " — 外部修改
+MARKER_MODIFIED = " *"            # " *" — 内部编辑未保存
+
 
 # ════════════════════════════════════════════════════════════════
 # MultiFormatViewer
 # ════════════════════════════════════════════════════════════════
 class MultiFormatViewer(QWidget):
     """
-    中央多格式预览器 — 支持文本文件和表格文件的分标签页预览。
+    中央多格式预览器 — 支持文本文件和表格文件的分标签页预览和编辑。
 
     Signals:
-        current_file_changed(str): 当前文件路径，无文件时为 ""
+        current_file_changed(str):      当前文件路径，无文件时为 ""
+        file_modified_changed(str, bool):  文件修改状态变更 (file_path, is_modified)
+        file_saved(str):                  文件已保存 (file_path)
+        editor_mode_changed(bool):        编辑/只读模式切换 (is_editable)
     """
 
     current_file_changed = pyqtSignal(str)
+    file_modified_changed = pyqtSignal(str, bool)
+    file_saved = pyqtSignal(str)
+    editor_mode_changed = pyqtSignal(bool)
 
     # ──────────────────────────────────────────────────────────
     # 初始化
@@ -119,6 +126,22 @@ class MultiFormatViewer(QWidget):
         # 标签拖拽移动后更新索引
         self.tab_widget.tabBar().tabMoved.connect(self._on_tab_moved)
         self.file_watcher.fileChanged.connect(self._on_file_changed)
+
+        # ── 快捷键 ───────────────────────────────────────────
+        # Ctrl+S 保存当前文件
+        self._shortcut_save = QShortcut(QKeySequence.Save, self)
+        self._shortcut_save.setContext(Qt.WidgetWithChildrenShortcut)
+        self._shortcut_save.activated.connect(self.save_current_file)
+
+        # Ctrl+Shift+S 另存为
+        self._shortcut_save_as = QShortcut(
+            QKeySequence("Ctrl+Shift,S"), self
+        )
+        self._shortcut_save_as.setContext(Qt.WidgetWithChildrenShortcut)
+        self._shortcut_save_as.activated.connect(self.save_current_file_as)
+
+        # 编辑模式默认可编辑
+        self.editor_mode_changed.emit(True)
 
     # ══════════════════════════════════════════════════════════
     # 欢迎标签页管理
@@ -339,14 +362,27 @@ class MultiFormatViewer(QWidget):
     # 文本文件处理
     # ──────────────────────────────────────────────────────────
     def _open_text_file(self, file_path: str) -> Tuple[bool, str]:
-        """在文本标签页中打开文件"""
+        """在文本标签页中打开文件 (可编辑模式)"""
         content, error = self._read_file_with_encoding(file_path)
         if error:
             return (False, error)
 
-        # 创建 CodeEditor
+        # 创建 CodeEditor（可编辑模式，默认 setReadOnly(False)）
         editor = CodeEditor(self)
         editor.setPlainText(content)
+
+        # 重置修改状态（setPlainText 后 Qt 自动重置，但我们额外确保）
+        editor.reset_modified()
+
+        # 连接编辑器的信号
+        editor.modification_state_changed.connect(
+            lambda modified, path=file_path: self._on_editor_modified_change(
+                path, modified
+            )
+        )
+        editor.save_requested.connect(
+            lambda: self.save_current_file()
+        )
 
         # 确保欢迎页在 tab 0
         self._ensure_welcome_first()
@@ -518,6 +554,244 @@ class MultiFormatViewer(QWidget):
             return (False, "读取 XLSX 失败: {}".format(e))
 
     # ══════════════════════════════════════════════════════════
+    # 编辑操作 — 公共接口
+    # ══════════════════════════════════════════════════════════
+
+    def _current_editor(self) -> Optional[CodeEditor]:
+        """获取当前标签页的 CodeEditor 实例（非表格页返回 None）"""
+        widget = self.tab_widget.currentWidget()
+        if isinstance(widget, CodeEditor):
+            return widget
+        return None
+
+    def save_current_file(self) -> bool:
+        """
+        保存当前文件。
+
+        Returns:
+            bool: 是否保存成功
+        """
+        file_path = self.get_current_file_path()
+        if file_path is None:
+            return False
+
+        editor = self._current_editor()
+        if editor is None:
+            # 表格文件不支持保存
+            return False
+
+        try:
+            content = editor.toPlainText()
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            # 重置修改状态
+            editor.reset_modified()
+
+            # 更新标签页标题
+            self._update_tab_title(file_path)
+
+            # 发射信号
+            self.file_saved.emit(file_path)
+
+            return True
+        except Exception as e:
+            QMessageBox.critical(
+                self, "保存失败",
+                "无法保存文件: {}".format(e)
+            )
+            return False
+
+    def save_current_file_as(self) -> bool:
+        """
+        另存为当前文件。
+
+        Returns:
+            bool: 是否保存成功
+        """
+        editor = self._current_editor()
+        if editor is None:
+            return False
+
+        file_path, _ = QFileDialog.getSaveFileName(
+            self, "另存为", "", "所有文件 (*)"
+        )
+        if not file_path:
+            return False
+
+        try:
+            content = editor.toPlainText()
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+
+            # 更改当前文件路径
+            old_path = self.get_current_file_path()
+            if old_path:
+                # 从旧路径取消监听
+                self._remove_file_watcher(old_path)
+                # 移除旧路径的 open_files 记录
+                if old_path in self.open_files:
+                    del self.open_files[old_path]
+
+            # 重置修改状态
+            editor.reset_modified()
+
+            # 更新标签页：文件名 + tooltip
+            widget = self.tab_widget.currentWidget()
+            if widget is not None:
+                idx = self.tab_widget.indexOf(widget)
+                if idx >= 0:
+                    base_name = os.path.basename(file_path)
+                    self.tab_widget.setTabText(idx, base_name)
+                    self.tab_widget.setTabToolTip(idx, file_path)
+
+            # 注册新路径
+            file_type = "text"
+            widget_new = self.tab_widget.currentWidget()
+            if widget_new is not None:
+                new_idx = self.tab_widget.indexOf(widget_new)
+                self.open_files[file_path] = (new_idx, file_type)
+                self.current_path = file_path
+                self._add_file_watcher(file_path)
+
+            # 发射信号
+            self.file_saved.emit(file_path)
+            self.current_file_changed.emit(file_path)
+
+            return True
+        except Exception as e:
+            QMessageBox.critical(
+                self, "保存失败",
+                "无法保存文件: {}".format(e)
+            )
+            return False
+
+    def is_current_modified(self) -> bool:
+        """
+        当前文件是否已修改。
+
+        Returns:
+            bool
+        """
+        editor = self._current_editor()
+        if editor is None:
+            return False
+        return editor.has_unsaved_changes()
+
+    def undo(self):
+        """撤销"""
+        editor = self._current_editor()
+        if editor is not None:
+            editor.undo()
+
+    def redo(self):
+        """重做"""
+        editor = self._current_editor()
+        if editor is not None:
+            editor.redo()
+
+    def cut(self):
+        """剪切"""
+        editor = self._current_editor()
+        if editor is not None:
+            editor.cut()
+
+    def copy(self):
+        """复制"""
+        editor = self._current_editor()
+        if editor is not None:
+            editor.copy()
+
+    def paste(self):
+        """粘贴"""
+        editor = self._current_editor()
+        if editor is not None:
+            editor.paste()
+
+    def find(self, text: str) -> bool:
+        """
+        在当前编辑器中查找文本。
+
+        Args:
+            text: 要查找的文本
+
+        Returns:
+            bool: 是否找到匹配
+        """
+        editor = self._current_editor()
+        if editor is None:
+            return False
+        return editor.find(text)
+
+    def replace(self, old: str, new: str) -> int:
+        """
+        在当前编辑器中替换所有匹配的文本。
+
+        Args:
+            old: 旧文本
+            new: 新文本
+
+        Returns:
+            int: 替换次数
+        """
+        editor = self._current_editor()
+        if editor is None:
+            return 0
+
+        cursor = editor.textCursor()
+        cursor.movePosition(QTextCursor.Start)
+        editor.setTextCursor(cursor)
+
+        count = 0
+        # 保存原始光标位置
+        while editor.find(old):
+            tc = editor.textCursor()
+            if tc.hasSelection():
+                tc.insertText(new)
+                count += 1
+
+        return count
+
+    # ══════════════════════════════════════════════════════════
+    # 编辑器修改状态跟踪
+    # ══════════════════════════════════════════════════════════
+
+    def _on_editor_modified_change(self, file_path: str, modified: bool):
+        """编辑器修改状态变化 → 更新标签页标题 + 发射信号"""
+        self._update_tab_title(file_path)
+        self.file_modified_changed.emit(file_path, modified)
+
+    def _update_tab_title(self, file_path: str):
+        """根据文件路径更新标签页标题（去除/添加标记）"""
+        widget = self._get_widget_for_path(file_path)
+        if widget is None:
+            return
+
+        idx = self.tab_widget.indexOf(widget)
+        if idx < 0:
+            return
+
+        base_name = os.path.basename(file_path)
+
+        # 获取编辑器修改状态和外部修改状态
+        is_modified = False
+        if isinstance(widget, CodeEditor):
+            is_modified = widget.has_unsaved_changes()
+
+        # 检查外部修改标记是否已存在（通过检查当前标题前缀）
+        current_title = self.tab_widget.tabText(idx)
+
+        # 从当前标题提取干净的基名
+        title = base_name
+
+        # 重建标题
+        result = title
+        if is_modified:
+            result = result + MARKER_MODIFIED
+
+        self.tab_widget.setTabText(idx, result)
+
+    # ══════════════════════════════════════════════════════════
     # QFileSystemWatcher 管理
     # ══════════════════════════════════════════════════════════
 
@@ -536,7 +810,14 @@ class MultiFormatViewer(QWidget):
             pass
 
     def _on_file_changed(self, file_path: str):
-        """文件被外部修改 → 标签名前缀 '● ' 标记"""
+        """
+        文件被外部修改或删除 → 更新标签页状态。
+
+        - 文件已删除：标题显示 "✕ 已删除"
+        - 文件被修改：标题前加 '● ' 标记，并弹窗询问是否重新加载
+
+        内部编辑标记 ' *' 保留在后。
+        """
         if file_path not in self.open_files:
             return
 
@@ -549,9 +830,62 @@ class MultiFormatViewer(QWidget):
         if idx < 0:
             return
 
+        base_name = os.path.basename(file_path)
+
+        # ── 检查文件是否存在 ─────────────────────────────────
+        if not os.path.exists(file_path):
+            self.tab_widget.setTabText(idx, "✕ 已删除")
+            return
+
+        # ── 文件存在 → 外部修改处理 ──────────────────────────
         current_title = self.tab_widget.tabText(idx)
-        if not current_title.startswith("\u25cf "):
-            self.tab_widget.setTabText(idx, "\u25cf {}".format(current_title))
+
+        # 如果标题已包含外部标记，跳过重复标记
+        if current_title.startswith(MARKER_EXTERNAL):
+            return
+
+        # 同时保留内部的 " *" 标记
+        is_modified = False
+        if isinstance(widget, CodeEditor):
+            is_modified = widget.has_unsaved_changes()
+
+        new_title = MARKER_EXTERNAL + base_name
+        if is_modified:
+            new_title += MARKER_MODIFIED
+
+        self.tab_widget.setTabText(idx, new_title)
+
+        # ── 弹窗询问是否重新加载 ─────────────────────────────
+        reply = QMessageBox.question(
+            self, "文件已修改",
+            f"文件 {base_name} 已被外部修改。\n是否重新加载？",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.Yes
+        )
+
+        if reply == QMessageBox.Yes:
+            # 仅文本编辑器支持重新加载
+            if not isinstance(widget, CodeEditor):
+                return
+
+            # 保存当前位置和滚动位置
+            cursor = widget.textCursor()
+            pos = cursor.position()
+            scroll_pos = widget.verticalScrollBar().value()
+
+            # 重新加载文件内容
+            try:
+                with open(file_path, 'r', encoding='utf-8') as f:
+                    content = f.read()
+                widget.setPlainText(content)
+                # 恢复位置
+                cursor.setPosition(min(pos, len(content)))
+                widget.setTextCursor(cursor)
+                widget.verticalScrollBar().setValue(
+                    min(scroll_pos, widget.verticalScrollBar().maximum())
+                )
+            except Exception as e:
+                print(f"重新加载文件失败: {e}")
 
     # ══════════════════════════════════════════════════════════
     # 标签页索引同步（标签拖拽后更新 open_files 索引）
@@ -599,7 +933,7 @@ class MultiFormatViewer(QWidget):
         return None
 
     # ══════════════════════════════════════════════════════════
-    # 标签页关闭
+    # 标签页关闭（含未保存检测）
     # ══════════════════════════════════════════════════════════
 
     def _on_tab_close_requested(self, index: int):
@@ -612,6 +946,8 @@ class MultiFormatViewer(QWidget):
         """
         关闭指定索引的标签页。
 
+        如果文件已修改，弹出 QMessageBox 询问保存/放弃/取消。
+
         Args:
             tab_index: 标签页索引
 
@@ -621,6 +957,33 @@ class MultiFormatViewer(QWidget):
         widget = self.tab_widget.widget(tab_index)
         if widget is None:
             return False
+
+        # 如果是 CodeEditor，检查是否已修改
+        if isinstance(widget, CodeEditor) and widget.has_unsaved_changes():
+            # 查找文件路径
+            file_path = self._find_path_for_widget(widget)
+            file_name = os.path.basename(file_path) if file_path else "未知文件"
+
+            reply = QMessageBox.warning(
+                self,
+                "文件未保存",
+                "「{}」已修改，是否保存更改？".format(file_name),
+                QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                QMessageBox.Cancel,
+            )
+
+            if reply == QMessageBox.Save:
+                if file_path:
+                    # 执行保存
+                    if not self._save_editor_content(widget, file_path):
+                        return False  # 保存失败，不关闭
+                else:
+                    # 没有对应文件路径 → 弹出另存为
+                    if not self.save_current_file_as():
+                        return False
+            elif reply == QMessageBox.Cancel:
+                return False
+            # Discard → 继续关闭
 
         # 查找该 widget 对应的文件路径
         to_remove = [
@@ -645,8 +1008,42 @@ class MultiFormatViewer(QWidget):
 
         return True
 
+    def _save_editor_content(self, editor: CodeEditor, file_path: str) -> bool:
+        """保存编辑器内容到文件"""
+        try:
+            content = editor.toPlainText()
+            with open(file_path, "w", encoding="utf-8") as f:
+                f.write(content)
+            editor.reset_modified()
+            self._update_tab_title(file_path)
+            self.file_saved.emit(file_path)
+            return True
+        except Exception as e:
+            QMessageBox.critical(
+                self, "保存失败",
+                "无法保存文件: {}".format(e)
+            )
+            return False
+
     def close_all_files(self):
         """关闭所有文件标签页（保留欢迎页）"""
+        # 先默认保存未保存的文件
+        for path in list(self.open_files.keys()):
+            widget = self._get_widget_for_path(path)
+            if isinstance(widget, CodeEditor) and widget.has_unsaved_changes():
+                reply = QMessageBox.warning(
+                    self,
+                    "文件未保存",
+                    "「{}」已修改，是否保存更改？".format(os.path.basename(path)),
+                    QMessageBox.Save | QMessageBox.Discard | QMessageBox.Cancel,
+                    QMessageBox.Cancel,
+                )
+                if reply == QMessageBox.Save:
+                    if not self._save_editor_content(widget, path):
+                        return  # 保存失败，中止
+                elif reply == QMessageBox.Cancel:
+                    return  # 取消关闭
+
         for path in list(self.open_files.keys()):
             self._remove_file_watcher(path)
 

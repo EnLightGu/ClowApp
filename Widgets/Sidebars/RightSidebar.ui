@@ -13,7 +13,7 @@
   <property name="minimumSize">
    <size>
     <width>80</width>
-    <height>0</height>
+    <height>100</height>
    </size>
   </property>
   <property name="maximumSize">
@@ -23,21 +23,33 @@
    </size>
   </property>
   <property name="styleSheet">
-   <string notr="true">QWidget {
+   <string notr="true">QWidget#RightSidebar {
     background-color: #2D2D2D;
 }
 QPushButton {
     background-color: transparent;
     border: none;
-    padding: 15px;
-    margin: 5px;
-    border-radius: 5px;
+    padding: 8px;
+    margin: 4px;
+    border-radius: 6px;
+    min-width: 48px;
+    min-height: 48px;
+    max-width: 64px;
+    max-height: 64px;
 }
 QPushButton:hover {
-    background-color: #A9A9A9;
+    background-color: #3C3C3C;
+    border: 1px solid #454545;
 }
 QPushButton:pressed {
-    background-color: #0000FF;
+    background-color: #454545;
+}
+QToolTip {
+    background-color: #333333;
+    color: #FFFFFF;
+    border: 1px solid #454545;
+    padding: 4px 8px;
+    font-size: 12px;
 }</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
@@ -59,7 +71,7 @@ QPushButton:pressed {
    <item>
     <widget class="QPushButton" name="button1">
      <property name="toolTip">
-      <string>设置</string>
+      <string>预览</string>
      </property>
      <property name="iconSize">
       <size>
@@ -71,8 +83,45 @@ QPushButton:pressed {
    </item>
    <item>
     <widget class="QPushButton" name="button2">
+     <property name="minimumSize">
+      <size>
+       <width>48</width>
+       <height>48</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>64</width>
+       <height>64</height>
+      </size>
+     </property>
      <property name="toolTip">
-      <string>帮助</string>
+      <string>逻辑门编辑器</string>
+     </property>
+     <property name="iconSize">
+      <size>
+       <width>60</width>
+       <height>60</height>
+      </size>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="button3">
+     <property name="minimumSize">
+      <size>
+       <width>48</width>
+       <height>48</height>
+      </size>
+     </property>
+     <property name="maximumSize">
+      <size>
+       <width>64</width>
+       <height>64</height>
+      </size>
+     </property>
+     <property name="toolTip">
+      <string>文本逻辑</string>
      </property>
      <property name="iconSize">
       <size>

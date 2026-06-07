@@ -10,7 +10,7 @@
 
 `LeftSidebar` 是一个纯按钮面板，职责仅限于：
 - 显示功能按钮（图标 + tooltip）
-- 按钮点击时调用 `CenterWidgetManage.toggle_panel()` 切换面板显隐
+- 按钮点击时调用 `CenterWidgetManage.toggle_panel()`（详见 [`module-center-manage.md`](module-center-manage.md)）切换面板显隐
 
 它**不参与**任何 widget 的创建和信号连接——这些由 `MainWindow._init_center_widget()` 统一管理。
 
